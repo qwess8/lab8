@@ -13,6 +13,26 @@ typedef struct node {
     struct node* next;
 } node;
 
+void push(node** queue, int data) {
+    node* current = *queue;
+    if (current) {
+        while (current->next) {
+            current = current->next;
+        }
+    }
+    node* newNode = (node*)malloc(sizeof(node));
+    newNode->data = data;
+    newNode->next = NULL;
+    if (current) current->next = newNode;
+    else *queue = newNode;
+}
+ 
+void pop(node** queue) {
+    node* current = *queue;
+    *queue = (*queue)->next;
+    free(current);
+}
+
 int** createG(int size) {
     int** G = (int**)malloc(size * sizeof(int*));
     for (int i = 0; i < size; i++) {
@@ -82,7 +102,7 @@ void BFS(int** G, int size, int* vis, int s) {
     while (!q.empty()) {
         s = q.front();
         q.pop();
-        printf("%d ", s);
+        //printf("%d ", s);
         for (int i = 0; i < size; i++) {
             if (G[s][i] && !vis[i]) {
                 q.push(i);
@@ -93,7 +113,7 @@ void BFS(int** G, int size, int* vis, int s) {
     }
     for (int i = 0; i < size; i++) {
         if (!vis[i]) {
-            printf("\n");
+            //printf("\n");
             BFS(G, size, vis, i);
         }
     }
@@ -124,30 +144,76 @@ void BFSA(node** A, int size, int* vis, int s) {
         }
     }
 }
+
+void BFSN(int** G, int size, int* vis, int s) {
+    node* q = NULL;
+    push(&q,s);
+    vis[s] = 1;
+ 
+    while (q) {
+        s = q->data;
+        pop(&q);
+        //printf("%d ", s);
+        for (int i = 0; i < size; ++i) {
+            if (G[s][i] && !vis[i]) {
+                push(&q, i);
+                vis[i] = 1;
+ 
+            }
+        }
+    }
+    for (int i = 0; i < size; ++i) {
+        if (!vis[i]) {
+            //printf("\n");
+            BFSN(G, size, vis, i);
+        }
+    }
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	setlocale(LC_ALL, "Rus");
-    int nG = 4;
+    int nG = 10000;
+	clock_t start, end;
 	srand(time(NULL));
 
-    printf("Введите количество вершин: ");
-	scanf("%d", &nG);
+    //printf("Введите количество вершин: ");
+	//scanf("%d", &nG);
 
 	int** G = createG(nG);;
-    node** A = createAdj(G, nG);
+    //node** A = createAdj(G, nG);
 
-	printG(G,nG);
+	//printG(G,nG);
 
+	FILE* file = fopen("result.csv", "a");
 	int* vis = (int*)malloc(sizeof(int) * nG);
 	for (int i = 0; i < nG; i++) vis[i] = 0;
-	BFS(G, nG, vis, 0);
 
+	start = clock();
+	BFS(G, nG, vis, 0);
+	end = clock();
+	float spent_time = (float)(end - start) / CLOCKS_PER_SEC;
+	printf("n: %d\nBFS;%.3f;\n",nG, spent_time);
+    fprintf(file, "n: %d\nBFS;%.3f;\n",nG, spent_time);
+
+	//for (int i = 0; i < nG; i++) vis[i] = 0;
+	//printf("\n");
+	//BFSA(A, nG, vis, 0);
+
+	
 	for (int i = 0; i < nG; i++) vis[i] = 0;
-	printf("\n");
-	BFSA(A, nG, vis, 0);
+	//printf("\n");
+
+	start = clock();
+	BFSN(G, nG, vis, 0);
+	end = clock();
+	spent_time = (float)(end - start) / CLOCKS_PER_SEC;
+    fprintf(file, "BFSN;%.3f;\n", spent_time);
+    printf("BFSN;% .3f;", spent_time);
+    fclose(file);
 	
 	getchar();
-	getchar();
+	//getchar();
 	return 0;
 }
 
